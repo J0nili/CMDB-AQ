@@ -1,0 +1,132 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>CMDB Cross-Reference</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app">
+<header class="topbar">
+<div class="left-info">
+<h1>📊 CMDB Cross-Reference</h1>
+<div class="storage-info"><span id="sDot" class="storage-dot"></span><span id="sLabel">—</span></div>
+<span id="lastUpdate" class="last-upd"></span>
+</div>
+<div class="right-actions"><button class="btn btn-sm" onclick="clearAll()">🗑️</button></div>
+</header>
+<div id="valWarn" class="val-warn" style="display:none"><span class="msg"></span><button class="dismiss-btn" onclick="this.parentElement.style.display='none'">✕</button></div>
+<div class="toolbar-row">
+<div class="left-totals">
+<span class="tot-item t-total">Total: <b id="tS">0</b></span>
+<span class="tot-item t-match">✅ <b id="tM">0</b></span>
+<span class="tot-item t-diff">⚠️ <b id="tD">0</b></span>
+<span class="tot-item t-miss">❌ <b id="tMi">0</b></span>
+<span class="tot-item t-extra">🟣 <b id="tE">0</b></span>
+</div>
+<div class="right-controls">
+<div id="selInfo" class="sel-info"><span id="selCnt">0</span> celdas</div>
+<div id="dzMini" class="drop-zone-mini">📂 Archivo</div>
+<input type="file" id="fInput" accept=".xlsx,.xls,.xlsm,.xlsb,.csv" style="display:none">
+<div class="export-wrap">
+<button id="expBtn" class="btn btn-sm">💾 Exportar ▾</button>
+<div id="expMenu" class="exp-menu">
+<div onclick="exportCSV()">📄 CSV</div>
+<div onclick="exportExcel()">📊 Excel</div>
+<div onclick="exportJSON()">🔧 JSON</div>
+<div onclick="exportSearchRes()">🔍 Búsqueda</div>
+<div onclick="exportDiff()">🔄 Diff</div>
+</div>
+</div>
+</div>
+</div>
+<div id="sResBar" class="search-res-bar" style="display:none">
+<span id="sTermC"></span><span>✅ <b id="sFoundT">0</b></span><span>❌ <b id="sNFT">0</b></span>
+<button class="btn btn-sm" onclick="clearSearch()">Limpiar</button>
+</div>
+<div id="diffBar" class="diff-bar" style="display:none">
+<span>📁 Anterior: <b id="diffPrevName">—</b></span>
+<span>📁 Actual: <b id="diffCurrName">—</b></span>
+<span>🟢 <b id="diffAdded">0</b> nuevos</span>
+<span>🔴 <b id="diffRemoved">0</b> eliminados</span>
+<span>🟡 <b id="diffModified">0</b> modificados</span>
+</div>
+<div id="legendBar" class="legend-bar">
+<div class="leg-item"><div class="leg-dot leg-match"></div>Coincide</div>
+<div class="leg-item"><div class="leg-dot leg-diff"></div>Diferente</div>
+<div class="leg-item"><div class="leg-dot leg-miss"></div>Faltante</div>
+</div>
+<div id="diffLegend" class="legend-bar" style="display:none">
+<div class="leg-item"><div class="leg-dot leg-added"></div>Nuevo</div>
+<div class="leg-item"><div class="leg-dot leg-removed"></div>Eliminado</div>
+<div class="leg-item"><div class="leg-dot leg-modified"></div>Modificado</div>
+</div>
+<div class="mode-tabs">
+<div class="mode-tab active" data-mode="compare" onclick="switchMode('compare')">📋 Comparar</div>
+<div class="mode-tab" data-mode="raw" onclick="switchMode('raw')">📄 Hojas</div>
+<div class="mode-tab" data-mode="search" onclick="switchMode('search')">🔍 Búsqueda</div>
+<div class="mode-tab" data-mode="diff" onclick="switchMode('diff')">🔄 Diff</div>
+<button class="fab-filter" onclick="toggleFP()">⚙️</button>
+</div>
+<div id="tabsBar" class="tabs-bar"></div>
+<div id="tblC" class="table-container"><div class="empty-state"><p style="font-size:40px">📂</p><p>Arrastra un archivo Excel</p></div></div>
+<aside id="filterPanel" class="filter-panel">
+<div id="fpDragH" class="fp-drag-header"><span>⚙️ Filtros</span><div><button class="fp-clear-btn" onclick="clearAllFilters()" title="Limpiar filtros">🧹</button><span id="filterBadge" class="fp-filter-badge" style="display:none">0</span><button class="fp-close-btn" onclick="toggleFP()">✕</button></div></div>
+<div class="fp-scroll-body">
+<div id="fpCompare">
+<div class="fp-section"><label>Buscar</label><input type="text" id="sInput" placeholder="Filtrar..."></div>
+<div class="fp-section"><label>Comparación</label><div class="ms-wrap"><button class="ms-btn">Estado: <span>Todos</span></button><div id="msCP" class="ms-panel"><label class="ms-item"><input type="checkbox" value="match" checked>✅ Coincide</label><label class="ms-item"><input type="checkbox" value="diff" checked>⚠️ Diferente</label><label class="ms-item"><input type="checkbox" value="miss" checked>❌ Faltante</label><div class="ms-actions"><button onclick="msAll('msCP')">✓</button><button onclick="msNone('msCP')">✗</button></div></div></div></div>
+<div class="fp-section"><label>Status</label><div class="ms-wrap"><button class="ms-btn">Status: <span>Todos</span></button><div id="msSP" class="ms-panel"></div></div></div>
+<div class="fp-section"><label>Días <select id="diasSel" class="inline-sel"></select></label><div class="ms-wrap"><button class="ms-btn">Rango: <span>Todos</span></button><div id="msDP" class="ms-panel"><label class="ms-item"><input type="checkbox" value="0-7" checked>0-7 días</label><label class="ms-item"><input type="checkbox" value="8-30" checked>8-30 días</label><label class="ms-item"><input type="checkbox" value="31-60" checked>31-60 días</label><label class="ms-item"><input type="checkbox" value="61+" checked>61+ días</label><label class="ms-item"><input type="checkbox" value="empty" checked>(vacío)</label><label class="ms-item"><input type="checkbox" value="negative" checked>(negativo)</label><div class="ms-actions"><button onclick="msAll('msDP')">✓</button><button onclick="msNone('msDP')">✗</button></div></div></div></div>
+<div class="fp-section"><label>Origen (extras)</label><div class="ms-wrap"><button class="ms-btn">Hojas: <span>Todos</span></button><div id="msOP" class="ms-panel"></div></div></div>
+<div class="fp-section"><label>Hojas a comparar</label><div id="sheetCBs"></div></div>
+<div class="fp-section"><label>Hoja principal</label><div id="princRadio"></div></div>
+<button class="btn btn-pri btn-block btn-sm" onclick="reprocess()">🔄 Aplicar</button>
+</div>
+<div id="fpRaw" style="display:none">
+<div class="fp-section"><label>Buscar</label><input type="text" id="rawSInput" placeholder="Filtrar..."></div>
+<div class="fp-section"><label>Columna</label><select id="rawCF"></select></div>
+</div>
+<div id="fpSearch" style="display:none">
+<div class="fp-section"><label>Buscar</label><input type="text" id="gSearchIn" placeholder="Buscar..."></div>
+<div class="fp-section"><label>Columna</label><select id="gSearchCol"></select></div>
+<div class="fp-section"><label>Hojas</label><div class="ms-wrap"><button class="ms-btn">Hojas: <span>Todos</span></button><div id="msSSP" class="ms-panel"></div></div></div>
+<button class="btn btn-block btn-sm" onclick="openBulk()">📋 Búsqueda masiva</button>
+</div>
+<div id="fpDiff" style="display:none">
+<div class="fp-section"><label>📁 Archivo anterior (base)</label><div id="dzPrev" class="drop-zone-mini">📂 Cargar anterior</div><input type="file" id="fInputPrev" accept=".xlsx,.xls,.xlsm,.xlsb,.csv" style="display:none"><span id="prevFileLabel" class="last-upd"></span></div>
+<div class="fp-section"><label>Tipo de cambio</label><div class="ms-wrap"><button class="ms-btn">Cambios: <span>Todos</span></button><div id="msDT" class="ms-panel"><label class="ms-item"><input type="checkbox" value="added" checked>🟢 Agregados</label><label class="ms-item"><input type="checkbox" value="removed" checked>🔴 Eliminados</label><label class="ms-item"><input type="checkbox" value="modified" checked>🟡 Modificados</label><div class="ms-actions"><button onclick="msAll('msDT')">✓</button><button onclick="msNone('msDT')">✗</button></div></div></div></div>
+<div class="fp-section"><label>Buscar</label><input type="text" id="diffSInput" placeholder="Filtrar diff..."></div>
+</div>
+</div>
+</aside>
+</div>
+<div id="dropOvr" class="drop-overlay"><div class="drop-content"><p style="font-size:48px">📥</p><p>Suelta el archivo aquí</p></div></div>
+<div id="loadOvr" class="load-overlay"><div class="load-box"><div class="spinner"></div><p id="loadTxt">Cargando...</p><p id="loadProg"></p></div></div>
+<div id="toast" class="toast"></div>
+<div id="ctxMenu" class="ctx-menu">
+<div class="ctx-item" onclick="ctxCopy()">📋 Copiar</div>
+<div id="ctxCutI" class="ctx-item" onclick="ctxCut()">✂️ Cortar</div>
+<div id="ctxPasteI" class="ctx-item" onclick="ctxPaste()">📌 Pegar</div>
+<div class="ctx-sep"></div>
+<div id="ctxDelI" class="ctx-item" onclick="ctxDel()">🗑️ Eliminar</div>
+<div id="ctxUndoI" class="ctx-item" onclick="ctxUndo()">↩️ Deshacer</div>
+<div class="ctx-sep"></div>
+<div class="ctx-item" onclick="selAll()">✅ Seleccionar todo</div>
+</div>
+<div id="bulkModal" class="modal-overlay"><div class="modal-box">
+<div class="modal-header"><h3>📋 Búsqueda masiva</h3><button class="modal-close" onclick="closeBulk()">✕</button></div>
+<div class="modal-body"><p>Pega valores separados por línea, coma o tabulador:</p><textarea id="bTA" rows="8" placeholder="Valor1&#10;Valor2&#10;Valor3"></textarea><div class="bulk-opts"><span>Columna:</span><select id="bSearchCol"></select><span>Hoja:</span><select id="bSearchS"></select><span>Términos: <b id="bCount">0</b></span></div></div>
+<div class="modal-footer"><button class="btn btn-pri" onclick="execBulk()">🔍 Buscar</button></div>
+</div></div>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+<script src="app-core.js"></script>
+<script src="app-data.js"></script>
+<script src="app-render.js"></script>
+<script src="app-ui.js"></script>
+</body>
+</html>
+
