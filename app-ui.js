@@ -1,5 +1,5 @@
 
-// === CMDB v14 UI — Selection, Edit, Keys, Panel, Events, INIT ===
+// === CMDB v14 UI — Selection, Edit, Keys, Panel, Events, INIT — FIXED ===
 function getCellCoords(e){
 var cell=e.target.closest('.virtual-cell');
 if(!cell)return null;
@@ -33,7 +33,7 @@ for(var cc4=1;cc4<=maxC;cc4++)sel.add(co.r+':'+cc4);
 selAnch={r:co.r,c:1};
 }
 isDragging=true;dragStart={r:co.r,c:0,mode:'row'};
-updSelInfo();return;
+updSelInfo();applySel();return;
 }
 if(e.shiftKey&&selAnch){
 var r1b=Math.min(selAnch.r,co.r),r2b=Math.max(selAnch.r,co.r);
@@ -49,7 +49,7 @@ sel.clear();sel.add(co.r+':'+co.c);
 selAnch={r:co.r,c:co.c};
 }
 isDragging=true;dragStart={r:co.r,c:co.c,mode:'cell',ctrl:e.ctrlKey||e.metaKey};
-updSelInfo();
+updSelInfo();applySel();
 }
 
 function onCellDrag(e){
@@ -60,14 +60,14 @@ if(dragStart.mode==='row'){
 var r1=Math.min(dragStart.r,co.r),r2=Math.max(dragStart.r,co.r),maxC=vs.cw.length-1;
 sel.clear();
 for(var r=r1;r<=r2;r++)for(var c=1;c<=maxC;c++)sel.add(r+':'+c);
-updSelInfo();
+updSelInfo();applySel();
 }else{
 if(!selAnch)return;
 var r1b=Math.min(selAnch.r,co.r),r2b=Math.max(selAnch.r,co.r);
 var c1b=Math.min(selAnch.c,co.c<1?1:co.c),c2b=Math.max(selAnch.c,co.c<1?1:co.c);
 if(!dragStart.ctrl)sel.clear();
 for(var rb=r1b;rb<=r2b;rb++)for(var cb=c1b;cb<=c2b;cb++)sel.add(rb+':'+cb);
-updSelInfo();
+updSelInfo();applySel();
 }
 }
 
@@ -91,7 +91,7 @@ function selAll(){
 sel.clear();
 for(var r=0;r<vs.total;r++)for(var c=1;c<vs.cw.length;c++)sel.add(r+':'+c);
 selAnch=vs.total>0?{r:0,c:1}:null;
-updSelInfo();
+updSelInfo();applySel();
 }
 
 function clipCopy(txt){
@@ -239,7 +239,7 @@ function onCtx(e){
 e.preventDefault();
 var co=getCellCoords(e);if(!co)return;
 var k=co.r+':'+co.c;
-if(!sel.has(k)){sel.clear();sel.add(k);selAnch={r:co.r,c:co.c};updSelInfo()}
+if(!sel.has(k)){sel.clear();sel.add(k);selAnch={r:co.r,c:co.c};updSelInfo();applySel()}
 var ir=mode==='raw';
 $('ctxCutI').classList.toggle('disabled',!ir);
 $('ctxPasteI').classList.toggle('disabled',!ir);
@@ -365,7 +365,9 @@ if(diffSInput){var dTimer=null;diffSInput.addEventListener('input',function(){cl
 
 var bTA=$('bTA');if(bTA){bTA.addEventListener('input',function(){updBC()})}
 var rawCF=$('rawCF');if(rawCF){rawCF.addEventListener('change',function(){vs.dirty=true;renderView()})}
-var diasSel=$('diasSel');if(diasSel){diasSel.addEventListener('change',function(){vs.dirty=true;renderView()})}
+
+// FIX #6: diasSel now updates filter badge
+var diasSel=$('diasSel');if(diasSel){diasSel.addEventListener('change',function(){updFilterBadge();vs.dirty=true;renderView()})}
 
 document.addEventListener('click',function(e){
 if(!e.target.closest('.ms-wrap')){document.querySelectorAll('.ms-panel.show').forEach(function(p){p.classList.remove('show')})}
