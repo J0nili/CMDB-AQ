@@ -1,5 +1,5 @@
 
-// === CMDB v14 CORE — Variables, Utils, IDB, ColMaps, Filters, SheetUI ===
+// === CMDB v14.1 CORE — Variables, Utils, IDB, ColMaps, Filters, SheetUI ===
 var PK='Serial',ST='Status',DI='Dias',DB='CMDB14',DBV=1,SN='store',ET='__extra__';
 var KT={SvN:1,Snow:1,Syma:1,Disc:1};
 var COLS=[{id:'serial',l:'Serial'},{id:'hostname',l:'Hostname'},{id:'placa',l:'Placa'},{id:'os',l:'OS'},{id:'status',l:'Status'},{id:'dias',l:'Dias'},{id:'actualizado',l:'Actualizado'},{id:'manufacturer',l:'Manufacturer'},{id:'model',l:'Model'},{id:'chassis',l:'Chassis'},{id:'disk',l:'Disk'},{id:'ram',l:'Ram'},{id:'ip',l:'IP'},{id:'empresa',l:'Empresa'},{id:'user',l:'User'},{id:'userid',l:'UserID'},{id:'ubicacion',l:'Ubicacion'},{id:'short_description',l:'short_description'},{id:'u_eol',l:'u_eol'},{id:'ohw',l:'O.HW'},{id:'oso',l:'O.So'},{id:'sheet',l:'Sheet'},{id:'lastloggedon',l:'Last logged on user'},{id:'mostfrequent',l:'Most frequent user'},{id:'architecture',l:'Architecture'},{id:'freedisk',l:'Free disk space'},{id:'freeram',l:'Free Ram'}];
@@ -8,7 +8,8 @@ var AL={serial:['Serial','SERIAL','No. Serie'],hostname:['Hostname','HOSTNAME','
 var RCO=['Serial','Hostname','Placa','OS','Status','Dias','Actualizado','Manufacturer','Model','Chassis','Disk','Ram','IP','Empresa','User','UserID','Ubicacion','short_description','u_eol','O.HW','O.So','Sheet','Last logged on user','Most frequent user','Architecture','Free disk space','Free Ram'];
 var raw={},maps={},cData={},exData=[],aTab='serial',mode='compare',rawSheet='';
 var sheets=[],selS=[],mainS='',statuses=new Set(),fName='';
-var sRes=[],sNF=[],bulkA=false,sorts={compare:{},raw:{},search:{},diff:{}};
+// FIX: Added sorts.extra namespace
+var sRes=[],sNF=[],bulkA=false,sorts={compare:{},extra:{},raw:{},search:{},diff:{}};
 var scrollH=null,scrollE=null,sIdx={};
 var pool=[],poolAct=new Map(),poolUsed=new Set(),freeList=[];
 var vs={rh:34,vis:0,st:0,total:0,data:[],cw:[],rc:[],sc:[],rt:'compare',li:-1,le:-1,dirty:false};
@@ -18,9 +19,10 @@ var STATUS_ALIASES=['status','Status','STATUS','Estado','State'];
 var nsMap=new Map();
 var collator=new Intl.Collator('es',{sensitivity:'base',numeric:true});
 var sIdxBuilt=false;
-// === DIFF VARIABLES ===
 var prevRaw={},prevSheets=[],prevFName='',prevMaps={};
 var diffData={},diffSheet='',diffCols=[];
+// Sidebar state
+var sbPinned=true;
 
 function $(id){return document.getElementById(id)}
 function nS(v){var s=String(v||'').trim();if(!s)return'';if(nsMap.has(s))return nsMap.get(s);var r=s.toUpperCase().replace(/[\s\u200B-\u200D\uFEFF\u00A0]+/g,'').replace(/[^\x20-\x7E]/g,'');nsMap.set(s,r);return r}
@@ -43,7 +45,8 @@ function dbG(k){return openDB().then(function(d){return new Promise(function(r,j
 function dbC(){return openDB().then(function(d){return new Promise(function(r,j){var t=d.transaction(SN,'readwrite');t.objectStore(SN).clear();t.oncomplete=function(){r()};t.onerror=function(e){j(e.target.error)}})})}
 function saveAll(){setSS('saving');var p=[];sheets.forEach(function(s){if(raw[s])p.push(dbP('s_'+s,raw[s]))});prevSheets.forEach(function(s){if(prevRaw[s])p.push(dbP('p_'+s,prevRaw[s]))});p.push(dbP('cfg',{selS:selS,mainS:mainS,fName:fName,sheets:sheets,prevSheets:prevSheets,prevFName:prevFName,ts:new Date().toISOString(),v:3}));return Promise.all(p).then(function(){setSS('ok');toast('\ud83d\udcbe')}).catch(function(){setSS('error')})}
 function loadAll(){setSS('loading');return dbG('cfg').then(function(cfg){if(!cfg){setSS('empty');return false}sheets=cfg.sheets||[];selS=cfg.selS||[];mainS=cfg.mainS||'';fName=cfg.fName||'';prevSheets=cfg.prevSheets||[];prevFName=cfg.prevFName||'';if(cfg.ts)$('lastUpdate').textContent=new Date(cfg.ts).toLocaleDateString('es-CO')+(fName?' \u2014 '+fName:'');raw={};prevRaw={};var lp=Promise.all(sheets.map(function(s){return dbG('s_'+s).then(function(d){if(d)raw[s]=d})}));var lp2=Promise.all(prevSheets.map(function(s){return dbG('p_'+s).then(function(d){if(d)prevRaw[s]=d})}));return Promise.all([lp,lp2]).then(function(){var total=sheets.reduce(function(a,s){return a+(raw[s]?raw[s].length:0)},0);if(!total){setSS('empty');return false}selS=selS.filter(function(s){return raw[s]});if(!selS.length)selS=sheets.filter(function(s){return raw[s]}).slice(0,4);if(!raw[mainS]&&selS.length)mainS=selS[0];if(prevFName)$('prevFileLabel').textContent=prevFName;setSS('ok');return true})}).catch(function(){setSS('error');return false})}
-function clearAll(){if(!confirm('\u00bfLimpiar todos los datos?'))return;dbC().then(function(){raw={};maps={};cData={};exData=[];selS=[];mainS='';fName='';statuses=new Set();sheets=[];sRes=[];sNF=[];sorts={compare:{},raw:{},search:{},diff:{}};nsMap.clear();sIdxBuilt=false;sIdx={};freeList.length=0;prevRaw={};prevSheets=[];prevFName='';prevMaps={};diffData={};$('lastUpdate').textContent='';$('prevFileLabel').textContent='';updTot(0,0,0,0,0);$('tblC').innerHTML='<div class="empty-state"><p style="font-size:40px">\ud83d\udcc2</p><p>Arrastra un archivo Excel</p></div>';buildTabs();setSS('empty');toast('\ud83d\uddd1\ufe0f')})}
+// FIX: sorts.extra in clearAll
+function clearAll(){if(!confirm('\u00bfLimpiar todos los datos?'))return;dbC().then(function(){raw={};maps={};cData={};exData=[];selS=[];mainS='';fName='';statuses=new Set();sheets=[];sRes=[];sNF=[];sorts={compare:{},extra:{},raw:{},search:{},diff:{}};nsMap.clear();sIdxBuilt=false;sIdx={};freeList.length=0;prevRaw={};prevSheets=[];prevFName='';prevMaps={};diffData={};$('lastUpdate').textContent='';$('prevFileLabel').textContent='';updTot(0,0,0,0,0);$('tblC').innerHTML='<div class="empty-state"><p style="font-size:40px">\ud83d\udcc2</p><p>Arrastra un archivo Excel</p></div>';buildTabs();setSS('empty');toast('\ud83d\uddd1\ufe0f')})}
 function setSS(st){var d=$('sDot'),l=$('sLabel');var m={ok:['storage-dot','\u2713'],saving:['storage-dot warn','\u2026'],loading:['storage-dot warn','\u21bb'],empty:['storage-dot warn','\u2014'],error:['storage-dot err','\u2717']};if(m[st]){d.className=m[st][0];l.textContent=m[st][1]}}
 // === COL MAPS ===
 function buildColMaps(){COLS.forEach(function(col){col.m={};sheets.forEach(function(s){if(!raw[s]||!raw[s].length)return;var sc=Object.keys(raw[s][0]);var aliases=AL[col.id]||[col.l];var f=sc.find(function(c){return aliases.some(function(a){return a.toLowerCase()===c.toLowerCase()})});if(f)col.m[s]=f})})}
