@@ -10,29 +10,40 @@
 </head>
 <body>
 <div class="app">
-<header class="topbar">
-<div class="left-info">
-<h1>📊 CMDB Cross-Reference</h1>
+<!-- LEFT SIDEBAR -->
+<aside id="sidebar" class="sidebar pinned">
+<div id="sbDragH" class="sb-header">
+<span class="sb-title">📊 CMDB</span>
+<div class="sb-actions">
+<button id="sbPin" class="sb-btn sb-pin pinned" onclick="togglePin()" title="Anclar/Desanclar">📌</button>
+<button class="sb-btn" onclick="toggleSB()" title="Cerrar">✕</button>
+</div>
+</div>
+<div class="sb-body">
+<!-- Info -->
+<div class="sb-section sb-info">
 <div class="storage-info"><span id="sDot" class="storage-dot"></span><span id="sLabel">—</span></div>
 <span id="lastUpdate" class="last-upd"></span>
 </div>
-<div class="right-actions"><button class="btn btn-sm" onclick="clearAll()">🗑️</button></div>
-</header>
+<!-- Warning -->
 <div id="valWarn" class="val-warn" style="display:none"><span class="msg"></span><button class="dismiss-btn" onclick="this.parentElement.style.display='none'">✕</button></div>
-<div class="toolbar-row">
-<div class="left-totals">
-<span class="tot-item t-total">Total: <b id="tS">0</b></span>
-<span class="tot-item t-match">✅ <b id="tM">0</b></span>
-<span class="tot-item t-diff">⚠️ <b id="tD">0</b></span>
-<span class="tot-item t-miss">❌ <b id="tMi">0</b></span>
-<span class="tot-item t-extra">🟣 <b id="tE">0</b></span>
+<!-- Totals -->
+<div class="sb-section">
+<div class="sb-label">Resumen</div>
+<div class="sb-totals">
+<div class="sb-tot-row t-total"><span>Total</span><b id="tS">0</b></div>
+<div class="sb-tot-row t-match"><span>✅ Coincide</span><b id="tM">0</b></div>
+<div class="sb-tot-row t-diff"><span>⚠️ Diferente</span><b id="tD">0</b></div>
+<div class="sb-tot-row t-miss"><span>❌ Faltante</span><b id="tMi">0</b></div>
+<div class="sb-tot-row t-extra"><span>🟣 Extra</span><b id="tE">0</b></div>
 </div>
-<div class="right-controls">
-<div id="selInfo" class="sel-info"><span id="selCnt">0</span> celdas</div>
+</div>
+<!-- File controls -->
+<div class="sb-section sb-file-row">
 <div id="dzMini" class="drop-zone-mini">📂 Archivo</div>
 <input type="file" id="fInput" accept=".xlsx,.xls,.xlsm,.xlsb,.csv" style="display:none">
 <div class="export-wrap">
-<button id="expBtn" class="btn btn-sm">💾 Exportar ▾</button>
+<button id="expBtn" class="btn btn-sm">💾 ▾</button>
 <div id="expMenu" class="exp-menu">
 <div onclick="exportCSV()">📄 CSV</div>
 <div onclick="exportExcel()">📊 Excel</div>
@@ -42,39 +53,63 @@
 </div>
 </div>
 </div>
-</div>
-<div id="sResBar" class="search-res-bar" style="display:none">
-<span id="sTermC"></span><span>✅ <b id="sFoundT">0</b></span><span>❌ <b id="sNFT">0</b></span>
+<!-- Sel info -->
+<div id="selInfo" class="sel-info"><span id="selCnt">0</span> celdas</div>
+<!-- Search bar -->
+<div id="sResBar" class="sb-search-bar" style="display:none">
+<span id="sTermC"></span><span>✅<b id="sFoundT">0</b></span><span>❌<b id="sNFT">0</b></span>
 <button class="btn btn-sm" onclick="clearSearch()">Limpiar</button>
 </div>
-<div id="diffBar" class="diff-bar" style="display:none">
-<span>📁 Anterior: <b id="diffPrevName">—</b></span>
-<span>📁 Actual: <b id="diffCurrName">—</b></span>
-<span>🟢 <b id="diffAdded">0</b> nuevos</span>
-<span>🔴 <b id="diffRemoved">0</b> eliminados</span>
-<span>🟡 <b id="diffModified">0</b> modificados</span>
+<!-- Diff bar -->
+<div id="diffBar" class="sb-diff-bar" style="display:none">
+<div>📁 Ant: <b id="diffPrevName">—</b></div>
+<div>📁 Act: <b id="diffCurrName">—</b></div>
+<div>🟢<b id="diffAdded">0</b> 🔴<b id="diffRemoved">0</b> 🟡<b id="diffModified">0</b></div>
 </div>
-<div id="legendBar" class="legend-bar">
+<!-- Legend -->
+<div id="legendBar" class="sb-legend">
 <div class="leg-item"><div class="leg-dot leg-match"></div>Coincide</div>
 <div class="leg-item"><div class="leg-dot leg-diff"></div>Diferente</div>
 <div class="leg-item"><div class="leg-dot leg-miss"></div>Faltante</div>
 </div>
-<div id="diffLegend" class="legend-bar" style="display:none">
+<div id="diffLegend" class="sb-legend" style="display:none">
 <div class="leg-item"><div class="leg-dot leg-added"></div>Nuevo</div>
 <div class="leg-item"><div class="leg-dot leg-removed"></div>Eliminado</div>
 <div class="leg-item"><div class="leg-dot leg-modified"></div>Modificado</div>
 </div>
-<div class="mode-tabs">
-<div class="mode-tab active" data-mode="compare" onclick="switchMode('compare')">📋 Comparar</div>
-<div class="mode-tab" data-mode="raw" onclick="switchMode('raw')">📄 Hojas</div>
-<div class="mode-tab" data-mode="search" onclick="switchMode('search')">🔍 Búsqueda</div>
-<div class="mode-tab" data-mode="diff" onclick="switchMode('diff')">🔄 Diff</div>
-<button class="fab-filter" onclick="toggleFP()">⚙️</button>
+<!-- Mode tabs -->
+<div class="sb-section">
+<div class="sb-label">Modo</div>
+<div class="sb-modes">
+<div class="sb-mode active" data-mode="compare" onclick="switchMode('compare')">📋 Comparar</div>
+<div class="sb-mode" data-mode="raw" onclick="switchMode('raw')">📄 Hojas</div>
+<div class="sb-mode" data-mode="search" onclick="switchMode('search')">🔍 Búsqueda</div>
+<div class="sb-mode" data-mode="diff" onclick="switchMode('diff')">🔄 Diff</div>
 </div>
-<div id="tabsBar" class="tabs-bar"></div>
+</div>
+<!-- Column/Sheet tabs -->
+<div class="sb-section">
+<div class="sb-label">Columnas / Hojas</div>
+<div id="tabsBar" class="sb-tabs"></div>
+</div>
+<!-- Row counter -->
+<div id="rowCounter" class="sb-row-counter">📋 <b class="rc-filtered">0</b> filas</div>
+<!-- Filter button -->
+<div class="sb-section" style="padding-top:6px">
+<button class="btn btn-block btn-sm" onclick="toggleFP()">⚙️ Filtros <span id="filterBadge" class="fp-filter-badge" style="display:none">0</span></button>
+<button class="btn btn-block btn-sm" onclick="clearAllFilters()" style="margin-top:4px">🧹 Limpiar filtros</button>
+</div>
+</div>
+</aside>
+<!-- TOGGLE BUTTON (when sidebar is closed) -->
+<button id="sbToggle" class="sb-toggle-btn" onclick="toggleSB()" title="Abrir panel">☰</button>
+<!-- MAIN CONTENT -->
+<main id="mainArea" class="main-area pinned">
 <div id="tblC" class="table-container"><div class="empty-state"><p style="font-size:40px">📂</p><p>Arrastra un archivo Excel</p></div></div>
+</main>
+<!-- FILTER PANEL (unchanged) -->
 <aside id="filterPanel" class="filter-panel">
-<div id="fpDragH" class="fp-drag-header"><span>⚙️ Filtros</span><div><button class="fp-clear-btn" onclick="clearAllFilters()" title="Limpiar filtros">🧹</button><span id="filterBadge" class="fp-filter-badge" style="display:none">0</span><button class="fp-close-btn" onclick="toggleFP()">✕</button></div></div>
+<div id="fpDragH" class="fp-drag-header"><span>⚙️ Filtros</span><div><button class="fp-clear-btn" onclick="clearAllFilters()" title="Limpiar filtros">🧹</button><button class="fp-close-btn" onclick="toggleFP()">✕</button></div></div>
 <div class="fp-scroll-body">
 <div id="fpCompare">
 <div class="fp-section"><label>Buscar</label><input type="text" id="sInput" placeholder="Filtrar..."></div>
