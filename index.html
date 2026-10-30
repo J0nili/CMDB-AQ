@@ -3,7 +3,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <title>CMDB Cross-Reference</title>
 <link rel="stylesheet" href="styles.css">
@@ -15,6 +15,8 @@
 <div id="sbDragH" class="sb-header">
 <span class="sb-title">📊 CMDB</span>
 <div class="sb-actions">
+<!-- ⭐ FIX: Botón limpiar restaurado -->
+<button class="sb-btn" onclick="clearAll()" title="Limpiar datos">🗑️</button>
 <button id="sbPin" class="sb-btn sb-pin pinned" onclick="togglePin()" title="Anclar/Desanclar">📌</button>
 <button class="sb-btn" onclick="toggleSB()" title="Cerrar">✕</button>
 </div>
@@ -85,6 +87,8 @@
 <div class="sb-mode" data-mode="raw" onclick="switchMode('raw')">📄 Hojas</div>
 <div class="sb-mode" data-mode="search" onclick="switchMode('search')">🔍 Búsqueda</div>
 <div class="sb-mode" data-mode="diff" onclick="switchMode('diff')">🔄 Diff</div>
+<!-- ⭐ NUEVO: Modo Resumen -->
+<div class="sb-mode" data-mode="resumen" onclick="switchMode('resumen')">📊 Resumen</div>
 </div>
 </div>
 <!-- Column/Sheet tabs -->
@@ -101,13 +105,13 @@
 </div>
 </div>
 </aside>
-<!-- TOGGLE BUTTON (when sidebar is closed) -->
+<!-- TOGGLE BUTTON -->
 <button id="sbToggle" class="sb-toggle-btn" onclick="toggleSB()" title="Abrir panel">☰</button>
 <!-- MAIN CONTENT -->
 <main id="mainArea" class="main-area pinned">
 <div id="tblC" class="table-container"><div class="empty-state"><p style="font-size:40px">📂</p><p>Arrastra un archivo Excel</p></div></div>
 </main>
-<!-- FILTER PANEL (unchanged) -->
+<!-- FILTER PANEL -->
 <aside id="filterPanel" class="filter-panel">
 <div id="fpDragH" class="fp-drag-header"><span>⚙️ Filtros</span><div><button class="fp-clear-btn" onclick="clearAllFilters()" title="Limpiar filtros">🧹</button><button class="fp-close-btn" onclick="toggleFP()">✕</button></div></div>
 <div class="fp-scroll-body">
@@ -135,6 +139,7 @@
 <div class="fp-section"><label>📁 Archivo anterior (base)</label><div id="dzPrev" class="drop-zone-mini">📂 Cargar anterior</div><input type="file" id="fInputPrev" accept=".xlsx,.xls,.xlsm,.xlsb,.csv" style="display:none"><span id="prevFileLabel" class="last-upd"></span></div>
 <div class="fp-section"><label>Tipo de cambio</label><div class="ms-wrap"><button class="ms-btn">Cambios: <span>Todos</span></button><div id="msDT" class="ms-panel"><label class="ms-item"><input type="checkbox" value="added" checked>🟢 Agregados</label><label class="ms-item"><input type="checkbox" value="removed" checked>🔴 Eliminados</label><label class="ms-item"><input type="checkbox" value="modified" checked>🟡 Modificados</label><div class="ms-actions"><button onclick="msAll('msDT')">✓</button><button onclick="msNone('msDT')">✗</button></div></div></div></div>
 <div class="fp-section"><label>Buscar</label><input type="text" id="diffSInput" placeholder="Filtrar diff..."></div>
+<div class="fp-section"><label class="ms-item"><input type="checkbox" id="diffIgnore" checked> Ignorar columnas Días / Actualizado</label></div>
 </div>
 </div>
 </aside>
@@ -158,9 +163,12 @@
 <div class="modal-footer"><button class="btn btn-pri" onclick="execBulk()">🔍 Buscar</button></div>
 </div></div>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+<script>window.XLSX||document.write('<script src="lib/xlsx.full.min.js"><\/script>')</script>
 <script src="app-core.js"></script>
 <script src="app-data.js"></script>
 <script src="app-render.js"></script>
+<!-- ⭐ NUEVO: Script de Resumen -->
+<script src="app-resumen.js"></script>
 <script src="app-ui.js"></script>
 </body>
 </html>
