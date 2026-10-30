@@ -173,7 +173,19 @@ function setupMS(){var fp=$('filterPanel');if(!fp||fp._delegated)return;fp._dele
 
 // === RENDER HELPERS ===
 // updRowCounter now targets sidebar element
-function updRowCounter(filtered,total){var el=$('rowCounter');if(!el)return;if(filtered===total)el.innerHTML='\ud83d\udccb <b class="rc-filtered">'+filtered.toLocaleString()+'</b> filas';else el.innerHTML='\ud83d\udccb <b class="rc-filtered">'+filtered.toLocaleString()+'</b> de <b class="rc-total">'+total.toLocaleString()+'</b> filas'}
+function updTotalCard(f,t){
+var n=$('tS');if(!n)return;
+var tt=f.toLocaleString();n.textContent=tt;n.style.fontSize=tt.length<=6?'':tt.length<=8?'32px':'26px';
+var lb=$('tcLabel'),sub=$('tcSub'),txt='',lab='Total';
+if(mode==='search'){lab='Total encontrado';txt=sNF.length?sNF.length.toLocaleString()+(sNF.length===1?' t\u00e9rmino':' t\u00e9rminos')+' sin resultado':'filas encontradas'}
+else if(mode==='resumen'){txt='filas en '+(typeof _resSheet!=='undefined'&&_resSheet!=='__ALL__'?_resSheet:'las hojas')}
+else if(f!==t){lab='Total filtrado';txt='de '+t.toLocaleString()+' filas'}
+else if(mode==='compare'){txt=aTab===ET?'seriales fuera de '+mainS:'seriales en '+mainS}
+else if(mode==='raw'){txt='filas en '+rawSheet}
+else if(mode==='diff'){txt='cambios en '+diffSheet}
+if(lb)lb.textContent=lab;if(sub)sub.textContent=txt;
+}
+function updRowCounter(filtered,total){updTotalCard(filtered,total);var el=$('rowCounter');if(!el)return;if(filtered===total)el.innerHTML='\ud83d\udccb <b class="rc-filtered">'+filtered.toLocaleString()+'</b> filas';else el.innerHTML='\ud83d\udccb <b class="rc-filtered">'+filtered.toLocaleString()+'</b> de <b class="rc-total">'+total.toLocaleString()+'</b> filas'}
 
 function setupEvts(){
 var expBtn=$('expBtn'),expMenu=$('expMenu');
